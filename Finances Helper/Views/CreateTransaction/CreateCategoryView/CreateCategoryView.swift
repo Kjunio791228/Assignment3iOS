@@ -1,29 +1,32 @@
-//
-//  CreateCategoryView.swift
-//  Finances Helper
-//
-//  Created by Kendrick  on 10/05/24.
-//
-
+// Imports SwiftUI framework
 import SwiftUI
 
+// Defines a SwiftUI view for creating a category
 struct CreateCategoryView: View {
+    // Defines properties
     let viewType: CreateCategoryViewType
     @ObservedObject var rootVM: RootViewModel
     @ObservedObject var createVM: CreateTransactionViewModel
     @State var colors = (1...10).map({_ in Color.random})
     @FocusState private var isFocused: Bool
+    
+    // Body of the view
     var body: some View {
-        VStack(spacing: 32){
+        VStack(spacing: 32) {
+            // Header view
             headerView
+            
             VStack {
                 TextField("Title", text: $createVM.categoryTitle)
                     .focused($isFocused)
                 Divider()
             }
+            
+            // Horizontal ScrollView for selecting category color
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack{
-                    ForEach(colors, id: \.self){color in
+                LazyHStack {
+                    // Iterates over colors to display circles
+                    ForEach(colors, id: \.self) { color in
                         Circle()
                             .fill(color)
                             .frame(width: 30, height: 30)
@@ -38,8 +41,8 @@ struct CreateCategoryView: View {
             }
             .frame(height: 50)
             .padding(.horizontal, -16)
-            .onAppear{
-                if let color = colors.first{
+            .onAppear {
+                if let color = colors.first {
                     createVM.categoryColor = color
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.02){
@@ -54,6 +57,7 @@ struct CreateCategoryView: View {
     }
 }
 
+// Preview provider for CreateCategoryView
 struct CreateCategoryView_Previews: PreviewProvider {
     static var previews: some View {
         ZStack {
@@ -64,11 +68,12 @@ struct CreateCategoryView_Previews: PreviewProvider {
     }
 }
 
-
-extension CreateCategoryView{
-    
-    private var headerView: some View{
-        HStack{
+// Extension for CreateCategoryView
+extension CreateCategoryView {
+    // Header view with buttons and title
+    private var headerView: some View {
+        HStack {
+            // Button to dismiss the view
             Button {
                 isFocused = false
                 createVM.createCategoryViewType = nil
@@ -76,17 +81,18 @@ extension CreateCategoryView{
                 Image(systemName: "xmark")
             }
             Spacer()
+            // Title of the view
             Text(viewType.navTitle)
                 .font(.headline.bold())
             Spacer()
-            
+            // Button to add category or subcategory
             Button {
                 isFocused = false
-                switch viewType{
+                switch viewType {
                 case .new(let isSubcategory):
-                    if isSubcategory{
+                    if isSubcategory {
                         createVM.addSubcategory()
-                    }else{
+                    } else {
                         createVM.addCategory()
                     }
                 case .edit:
@@ -98,24 +104,24 @@ extension CreateCategoryView{
             .disabled(createVM.categoryTitle.isEmpty)
         }
     }
-    
-
 }
 
-enum CreateCategoryViewType: Identifiable, Equatable{
-    
+// Enum to represent the type of CreateCategoryView
+enum CreateCategoryViewType: Identifiable, Equatable {
     case new(isSub: Bool)
     case edit(isSub: Bool, CategoryEntity)
     
-    var id: Int{
-        switch self{
+    // ID for Identifiable protocol
+    var id: Int {
+        switch self {
         case .new: return 0
         case .edit: return 1
         }
     }
     
-    var navTitle: String{
-        switch self{
+    // Title for the navigation bar
+    var navTitle: String {
+        switch self {
         case .new(let isSub):
             return "New \(isSub ? "subcategory" : "category")"
         case .edit(let isSub, _):
