@@ -1,21 +1,23 @@
+// CategoryGroupView.swift
+// Finances Helper
 //
-//  CategoryGroupView.swift
-//  Finances Helper
-//
-//  Created by Kendrick  on 10/05/24.
-//
+// Created by Kendrick on 10/05/24.
 
 import SwiftUI
 
+// Define a SwiftUI view called CategoryGroupView
 struct CategoryGroupView: View {
-    var chartData: ChartData
-    @ObservedObject var rootVM: RootViewModel
-    var groupedTransactions: [[TransactionEntity]]{
+    var chartData: ChartData // Data for the chart
+    @ObservedObject var rootVM: RootViewModel // View model for root view
+    
+    // Computed property to get grouped transactions based on current tab and category ID
+    var groupedTransactions: [[TransactionEntity]] {
         rootVM.statsData.getTransactions(for: rootVM.currentTab, categoryId: chartData.id)
             .groupTransactionsByDate()
     }
     
-    private var total: String{
+    // Computed property to calculate total amount of transactions
+    private var total: String {
         groupedTransactions.flatMap({$0}).reduce(0.0, {$0 + $1.amount}).toCurrency(symbol: chartData.cyrrencySymbol)
     }
     
@@ -24,13 +26,17 @@ struct CategoryGroupView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(alignment: .leading, spacing: 16) {
                     
+                    // Loop through grouped transactions
                     ForEach(groupedTransactions.indices, id: \.self) { index in
-                        if let date = groupedTransactions[index].first?.createAt?.toFriedlyDate{
+                        if let date = groupedTransactions[index].first?.createAt?.toFriedlyDate {
+                            // Display date for each group
                             Text(date)
                                 .font(.subheadline.bold())
                                 .foregroundColor(.secondary)
                             
+                            // Loop through transactions within each group
                             ForEach(groupedTransactions[index]) { transaction in
+                                // Navigate to transaction details view
                                 NavigationLink {
                                     TransactionDetailsView(transaction: transaction)
                                 } label: {
@@ -44,6 +50,7 @@ struct CategoryGroupView: View {
             }
         }
         .toolbar {
+            // Display title and total amount in the toolbar
             ToolbarItem(placement: .principal) {
                 VStack {
                     Text(chartData.title)
@@ -56,6 +63,7 @@ struct CategoryGroupView: View {
     }
 }
 
+// Preview provider for CategoryGroupView
 struct CategoryGroupView_Previews: PreviewProvider {
     static let category = dev.category.first!
     static var previews: some View {
@@ -65,17 +73,17 @@ struct CategoryGroupView_Previews: PreviewProvider {
     }
 }
 
-extension CategoryGroupView{
-    
-    private func rowView(_ transaction: TransactionEntity) -> some View{
+extension CategoryGroupView {
+    // Function to create a row view for each transaction
+    private func rowView(_ transaction: TransactionEntity) -> some View {
         VStack {
             HStack{
                 VStack(alignment: .leading) {
-                    Text(chartData.title)
-                    Text(transaction.note ?? "")
+                    Text(chartData.title) // Display category title
+                    Text(transaction.note ?? "") // Display transaction note
                 }
                 Spacer()
-                Text(transaction.friendlyAmount)
+                Text(transaction.friendlyAmount) // Display transaction amount
                     .font(.headline)
             }
             Divider()
@@ -83,5 +91,4 @@ extension CategoryGroupView{
         .foregroundColor(.black)
         .background(Color.white)
     }
-    
 }
