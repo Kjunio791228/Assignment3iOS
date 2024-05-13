@@ -1,33 +1,43 @@
+// TransactionEntity.swift
+//  Finances Helper
+//  Created by Kendrick  on 10/11/24.
+//
 import Foundation
 import CoreData
 import SwiftUI
 
-extension TransactionEntity{
+// Extension for TransactionEntity
+extension TransactionEntity {
     
-    
-    var wrappedType: TransactionType{
+    // Computed property to get transaction type
+    var wrappedType: TransactionType {
         .init(rawValue: type ?? "INCOME") ?? .income
     }
     
-    var friendlyAmount: String{
+    // Computed property to get a friendly display of amount with currency symbol
+    var friendlyAmount: String {
         amount.twoNumString + " \(currency?.shortestSymbol ?? "$")"
     }
     
-    var currency: Currency?{
+    // Computed property to get currency based on currency code
+    var currency: Currency? {
         Currency.currency(for: currencyCode ?? "USD")
     }
     
-    var wrappedSubcategory: CategoryEntity?{
+    // Computed property to get subcategory entity
+    var wrappedSubcategory: CategoryEntity? {
         category?.wrappedSubcategories.first(where: {$0.id == subcategoryId})
     }
     
-    var chartData: ChartData?{
-        if let id = category?.id, let categoryTitle = category?.title, let color = category?.wrappedColor{
+    // Computed property to get chart data for this transaction
+    var chartData: ChartData? {
+        if let id = category?.id, let categoryTitle = category?.title, let color = category?.wrappedColor {
             return ChartData(id: id, color: color, value: amount, title: categoryTitle, type: wrappedType, cyrrencySymbol: currency?.shortestSymbol ?? "$")
         }
         return nil
     }
     
+    // Static method to create a fetch request for TransactionEntity with predicate
     static func fetchRequest(for predicate: NSPredicate) -> NSFetchRequest<TransactionEntity> {
         let request = NSFetchRequest<TransactionEntity>(entityName: "TransactionEntity")
         request.sortDescriptors = [NSSortDescriptor(key: "createAt", ascending: false),
@@ -37,7 +47,7 @@ extension TransactionEntity{
         return request
     }
     
-    
+    // Static method to create a TransactionEntity
     static func create(amount: Double,
                        createAt: Date,
                        type: TransactionType,
@@ -46,7 +56,7 @@ extension TransactionEntity{
                        category: CategoryEntity,
                        subcategoryId: String?,
                        note: String?,
-                       context: NSManagedObjectContext){
+                       context: NSManagedObjectContext) {
         
         let entity = TransactionEntity(context: context)
         entity.id = UUID().uuidString
@@ -66,9 +76,10 @@ extension TransactionEntity{
         context.saveContext()
     }
     
-    static func remove(_ item: TransactionEntity){
+    // Static method to remove a TransactionEntity
+    static func remove(_ item: TransactionEntity) {
         guard let context = item.managedObjectContext else { return }
-        if let account = item.forAccount{
+        if let account = item.forAccount {
             account.balance = item.wrappedType == .expense ?
             account.balance + item.amount : account.balance - item.amount
         }
@@ -77,24 +88,29 @@ extension TransactionEntity{
     }
 }
 
-
-extension NSPredicate{
-    static func transactionPredicate(startDate: Date, endDate: Date, accountId: String)-> Self? {
+// Extension for NSPredicate
+extension NSPredicate {
+    // Static method to create a predicate for transaction with date range and account id
+    static func transactionPredicate(startDate: Date, endDate: Date, accountId: String) -> Self? {
       NSPredicate(format: "createAt >= %@ AND createAt < %@ AND forAccount.id CONTAINS[c] %@", startDate as NSDate, endDate as NSDate, accountId) as? Self
     }
 }
 
-enum TransactionTimeFilter: CaseIterable, Identifiable, Equatable{
+// Enum for transaction time filter
+enum TransactionTimeFilter: CaseIterable, Identifiable, Equatable {
     
-    
+    // All cases for time filters
     static var allCases: [TransactionTimeFilter] = [.day, .week, .month, .year]
     
-    var id: String{ title }
+    // ID for Identifiable protocol
+    var id: String { title }
     
+    // Cases for time filters
     case day, week, month, year
     case select(Date, Date)
     
-    var title: String{
+    // Title for each time filter
+    var title: String {
         switch self {
         case .day: return "Day"
         case .week: return "Week"
@@ -104,7 +120,8 @@ enum TransactionTimeFilter: CaseIterable, Identifiable, Equatable{
         }
     }
     
-    var date: (start: Date?, end: Date?){
+    // Dates for each time filter
+    var date: (start: Date?, end: Date?) {
         switch self {
         case .day: return (.now.noon, Date().dayAfter)
         case .week: return (Date().startOfWeek, Date().endOfWeek)
@@ -114,7 +131,8 @@ enum TransactionTimeFilter: CaseIterable, Identifiable, Equatable{
         }
     }
     
-    var navTitle: String?{
+    // Navigation title for each time filter
+    var navTitle: String? {
         let dates = date
         switch self {
         case .day:
@@ -130,5 +148,3 @@ enum TransactionTimeFilter: CaseIterable, Identifiable, Equatable{
         }
     }
 }
-
-
